@@ -128,16 +128,25 @@ panic(char *s)
 #define CRTPORT 0x3d4
 static ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
 
-static void
-cgaputc(int c)
-{
-  int pos;
-
-  // Cursor position: col + 80*row.
+int get_pos() {
   outb(CRTPORT, 14);
-  pos = inb(CRTPORT+1) << 8;
+  int pos = inb(CRTPORT+1) << 8;
   outb(CRTPORT, 15);
   pos |= inb(CRTPORT+1);
+  return pos;
+}
+
+static void change_pos(int pos) {
+  outb(CRTPORT, 14);
+  outb(CRTPORT+1, pos>>8);
+  outb(CRTPORT, 15);
+  outb(CRTPORT+1, pos);
+}
+
+static void
+cgaputc(int c) {
+  // Cursor position: col + 80*row.
+  int pos = get_pos();
 
   if(c == '\n')
     pos += 80 - pos%80;
@@ -146,8 +155,10 @@ cgaputc(int c)
   } else
     crt[pos++] = (c&0xff) | 0x0700;  // black on white
 
-  if(pos < 0 || pos > 25*80)
-    panic("pos under/overflow");
+  if(pos < 0)
+    panic("pos underflow");
+  if(pos > 25*80)
+    panic("pos overflow");
 
   if((pos/80) >= 24){  // Scroll up.
     memmove(crt, crt+80, sizeof(crt[0])*23*80);
@@ -155,11 +166,9 @@ cgaputc(int c)
     memset(crt+pos, 0, sizeof(crt[0])*(24*80 - pos));
   }
 
-  outb(CRTPORT, 14);
-  outb(CRTPORT+1, pos>>8);
-  outb(CRTPORT, 15);
-  outb(CRTPORT+1, pos);
-  crt[pos] = ' ' | 0x0700;
+  change_pos(pos);
+  if(c == BACKSPACE)
+    crt[pos] = ' ' | 0x0700;
 }
 
 void
@@ -184,15 +193,56 @@ struct {
   uint r;  // Read index
   uint w;  // Write index
   uint e;  // Edit index
+  uint end;// end index
 } input;
 
 #define C(x)  ((x)-'@')  // Control-x
+#define S(x)  ((x)+' ')  // Shilft-x
+
+void go_first_line() {
+  int pos = get_pos();
+  int delta_pos = 2 - pos%80;
+  int new_pos = pos + delta_pos;
+  input.e += delta_pos;
+  input.end += delta_pos;
+  change_pos(new_pos);
+}
+
+void go_end_line() {
+  int pos = get_pos();
+  int delta_pos = 79 - pos%80;
+  int new_pos = pos + delta_pos;
+  input.e += delta_pos;
+  input.end += delta_pos;
+  change_pos(new_pos);
+}
+
+void delete_char()
+{
+  consputc(BACKSPACE);
+  input.e--;
+  input.end--;
+}
+
+void delete_last_word() {
+  while(input.buf[(input.e) % INPUT_BUF] == ' ') {
+    if(get_pos()%80 == 2) // is cursor at first of line?
+      break;
+    
+    delete_char();
+  }
+  while(input.buf[(input.e) % INPUT_BUF] != ' ') {
+   if(get_pos()%80 == 2) // is cursor at first of line?
+      break;
+
+   delete_char();
+  }
+}
 
 void
 consoleintr(int (*getc)(void))
 {
   int c, doprocdump = 0;
-
   acquire(&cons.lock);
   while((c = getc()) >= 0){
     switch(c){
@@ -212,6 +262,15 @@ consoleintr(int (*getc)(void))
         input.e--;
         consputc(BACKSPACE);
       }
+      break;
+    case C('W'):
+      delete_last_word();
+      break;
+    case S('['):
+      go_first_line();
+      break;
+    case S(']'):
+      go_end_line();
       break;
     default:
       if(c != 0 && input.e-input.r < INPUT_BUF){
