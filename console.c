@@ -256,6 +256,13 @@ void remove_char()
 }
 
 void remove_last_word() {
+    while(input.e != input.w) {
+    if(get_pos()%80 == 0) // is cursor at first of line?
+      break;
+    remove_char();
+    if(input.buf[(input.e % INPUT_BUF)-1] != 32) // 32 = ascii SPACE
+      break;
+  }
   while(input.e != input.w) {
     if(get_pos()%80 == 0) // is cursor at first of line?
       break;
