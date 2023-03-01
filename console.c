@@ -211,7 +211,7 @@ void go_first_line() {
 
 void go_end_line() {
   int pos = get_pos();
-  int delta_pos = 79 - pos%80;
+  int delta_pos = input.last - input.e;
   input.e += delta_pos;
   change_pos(pos + delta_pos);
 }
@@ -222,10 +222,11 @@ void shift_right_input() {
   change_pos(pos + 1);
   index = input.e;
   next_char = input.buf[index % INPUT_BUF];
+  input.buf[index % INPUT_BUF] = ' ';
   while(index < input.last) {
-    int tmp = next_char;
+    int temp = next_char;
     next_char = input.buf[(index + 1) % INPUT_BUF];
-    input.buf[(index + 1) % INPUT_BUF] = tmp;
+    input.buf[(index + 1) % INPUT_BUF] = temp;
     consputc(input.buf[(index + 1) % INPUT_BUF]);
     index++;
   }
@@ -292,6 +293,9 @@ void consoleintr(int (*getc)(void))
       break;
     case S('['):  // Move to First of Line
       go_first_line();
+      change_pos(get_pos()-1);
+      shift_right_input();
+      change_pos(get_pos()+1);
       break;
     case S(']'):  // Move to End of Line
       go_end_line();
