@@ -202,20 +202,6 @@ static void change_pos(int pos) {
   outb(CRTPORT+1, pos);
 }
 
-void go_first_line() {
-  int pos = get_pos();
-  int delta_pos = pos%80 - 2;
-  input.e -= delta_pos;
-  change_pos(pos - delta_pos);
-}
-
-void go_end_line() {
-  int pos = get_pos();
-  int delta_pos = input.last - input.e;
-  input.e += delta_pos;
-  change_pos(pos + delta_pos);
-}
-
 void shift_right_input() {
   int index, next_char, pos;
   pos = get_pos();
@@ -248,6 +234,20 @@ void shift_left_input() {
   change_pos(pos);
 }
 
+void go_first_line() {
+  int pos = get_pos();
+  int delta_pos = pos%80 - 2;
+  input.e -= delta_pos;
+  change_pos(pos - delta_pos);
+}
+
+void go_end_line() {
+  int pos = get_pos();
+  int delta_pos = input.last - input.e;
+  input.e += delta_pos;
+  change_pos(pos + delta_pos);
+}
+
 void remove_char()
 {
   shift_left_input();
@@ -256,19 +256,20 @@ void remove_char()
 }
 
 void remove_last_word() {
-    while(input.e != input.w) {
+  while(input.e != input.w) {
     if(get_pos()%80 == 0) // is cursor at first of line?
       break;
-    remove_char();
     if(input.buf[(input.e % INPUT_BUF)-1] != 32) // 32 = ascii SPACE
       break;
+    remove_char();
   }
   while(input.e != input.w) {
     if(get_pos()%80 == 0) // is cursor at first of line?
       break;
-    remove_char();
+
     if(input.buf[(input.e % INPUT_BUF)-1] == 32) // 32 = ascii SPACE
       break;
+    remove_char();
   }
 }
 
@@ -295,17 +296,26 @@ void consoleintr(int (*getc)(void))
         input.e--;
       }
       break;
-    case C('W'):
+    case C('W'): // remove pre-cursor word
       remove_last_word();
       break;
     case S('['):  // Move to First of Line
-      go_first_line();
-      change_pos(get_pos()-1);
-      shift_right_input();
-      change_pos(get_pos()+1);
+      if(get_pos()%80 != 2) // is cursor at first of line?
+      {
+        go_first_line();
+        change_pos(get_pos()-1);
+        shift_right_input();
+        change_pos(get_pos()+1);
+      }
       break;
     case S(']'):  // Move to End of Line
-      go_end_line();
+      if(input.last != input.e) // is cursor at end of line?
+      {
+        go_end_line();
+        shift_right_input();
+        input.buf[input.e++ % INPUT_BUF] = ' ';
+        change_pos(get_pos()+1);
+      }
       break;
     default:
       if(c != 0 && input.e-input.r < INPUT_BUF){
