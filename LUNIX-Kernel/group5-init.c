@@ -3,9 +3,12 @@
 
 MODULE_LICENSE("GPL");
 
-int init_module(void) {
- printk(KERN_INFO "Group #5 :\n-Hamed Miramirkhani\n-Sina Tabsi\n-Fatemeh Mohammadi\n");
- return 0;
+static int __init print_group_info(void) {
+    printk(KERN_INFO "Group #5 :\n-Hamed Miramirkhani\n-Sina Tabsi\n-Fatemeh Mohammadi\n");
+    return 0;
 }
-
-void cleanup_module(void) {}
+static void __exit outro(void) {
+    printk(KERN_INFO "Goodbye :)\n");
+}
+module_init(print_group_info);
+module_exit(outro);

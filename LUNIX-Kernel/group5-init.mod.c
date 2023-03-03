@@ -2,7 +2,6 @@
 #define INCLUDE_VERMAGIC
 #include <linux/build-salt.h>
 #include <linux/elfnote-lto.h>
-#include <linux/export-internal.h>
 #include <linux/vermagic.h>
 #include <linux/compiler.h>
 
@@ -26,16 +25,15 @@ __section(".gnu.linkonce.this_module") = {
 MODULE_INFO(retpoline, "Y");
 #endif
 
-
 static const struct modversion_info ____versions[]
 __used __section("__versions") = {
-	{ 0xbdfb6dbb, "__fentry__" },
-	{ 0x92997ed8, "_printk" },
+	{ 0x32e21920, "module_layout" },
 	{ 0x5b8239ca, "__x86_return_thunk" },
-	{ 0x541a6db8, "module_layout" },
+	{ 0x92997ed8, "_printk" },
+	{ 0xbdfb6dbb, "__fentry__" },
 };
 
 MODULE_INFO(depends, "");
 
 
-MODULE_INFO(srcversion, "4193997B9BC0EE063421986");
+MODULE_INFO(srcversion, "4854A2C1F7A0E32D67E8928");

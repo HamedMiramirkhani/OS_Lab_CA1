@@ -1,1 +1,1 @@
-cmd_/home/f102m08/OS_LAB/LAB01/OS_Lab_CA1/LUNIX-Kernel/Module.symvers := sed 's/ko$$/o/' /home/f102m08/OS_LAB/LAB01/OS_Lab_CA1/LUNIX-Kernel/modules.order | scripts/mod/modpost -m -a  -o /home/f102m08/OS_LAB/LAB01/OS_Lab_CA1/LUNIX-Kernel/Module.symvers -e -i Module.symvers   -T -
+cmd_/home/hamed/Desktop/OS-Lab-CA1/LUNIX-Kernel/Module.symvers := sed 's/\.ko$$/\.o/' /home/hamed/Desktop/OS-Lab-CA1/LUNIX-Kernel/modules.order | scripts/mod/modpost -m -a  -o /home/hamed/Desktop/OS-Lab-CA1/LUNIX-Kernel/Module.symvers -e -i Module.symvers   -T -
